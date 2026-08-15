@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-news-api"
+version = "0.1.0"
+description = "AI news API"
+requires-python = ">=3.11"
+
+[project.scripts]
+ainews = "app.main:main"
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
