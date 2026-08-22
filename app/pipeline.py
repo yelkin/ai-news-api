@@ -1,8 +1,8 @@
-def run_pipeline():
-    return [
-        {
-            "source": "openai",
-            "title": "Example AI News",
-            "summary": "This is mock data for week 1.",
-        }
-    ]
+from app.agents.job_posting import enrich_job_posting
+from app.schemas.models import JobPosting
+from app.scrapers.arbeitnow import scrape
+
+
+def run_pipeline() -> JobPosting:
+    job_posting = scrape()
+    return enrich_job_posting(job_posting)
