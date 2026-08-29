@@ -1,6 +1,6 @@
 from openai import OpenAI
 
-from app.schemas.models import JobPosting
+from app.schemas.models import JobPosting, JobPostingEnrichment
 
 
 def enrich_job_posting(job_posting: JobPosting) -> JobPosting:
@@ -16,12 +16,17 @@ def enrich_job_posting(job_posting: JobPosting) -> JobPosting:
                     "the qualifications field."
                 ),
             },
-            {"role": "user", "content": job_posting.model_dump_json()},
+            {
+                "role": "user",
+                "content": job_posting.model_dump_json(),
+            },
         ],
-        text_format=JobPosting,
+        text_format=JobPostingEnrichment,
     )
 
     if response.output_parsed is None:
         raise ValueError("OpenAI returned no parsed job posting")
 
-    return response.output_parsed
+    enriched = JobPosting.model_validate(job_posting.model_dump())
+    enriched.qualifications = response.output_parsed.qualifications
+    return enriched

@@ -83,7 +83,12 @@ def query_greenhouse() -> None:
 
 
 # %%
-print(scrape_arbeitnow().model_dump_json(indent=2))
+print(
+    json.dumps(
+        [posting.model_dump(mode="json") for posting in scrape_arbeitnow()],
+        indent=2,
+        ensure_ascii=False,
+    )
+)
 query_hacker_news()
 query_greenhouse()
-
