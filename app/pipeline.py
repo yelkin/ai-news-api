@@ -3,7 +3,6 @@ from sqlmodel import Session, select
 from app.schemas.models import JobPosting, ScrapeSummary, utc_now
 from app.scrapers.arbeitnow import scrape
 
-
 SOURCE_FIELDS = {
     "source_url",
     "company",
@@ -43,6 +42,13 @@ def ingest_jobs(
                     getattr(existing, field) != getattr(posting, field)
                     for field in SOURCE_FIELDS
                 )
+                embedding_changed = any(
+                    getattr(existing, field) != getattr(posting, field)
+                    for field in ("title", "description")
+                )
+                if embedding_changed:
+                    existing.embedding = None
+                    existing.embedding_version = None
                 values = posting.model_dump(include=SOURCE_FIELDS | {"retrieved_at"})
                 existing.sqlmodel_update(values)
                 if changed:

@@ -6,7 +6,6 @@ from urllib3.util.retry import Retry
 
 from app.schemas.models import JobPosting
 
-
 URL = "https://www.arbeitnow.com/api/job-board-api"
 
 RETRY_POLICY = Retry(

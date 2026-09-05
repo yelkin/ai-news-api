@@ -1,9 +1,10 @@
 from openai import OpenAI
 
-from app.schemas.models import JobPosting, JobPostingEnrichment
+from app.schemas.models import JobPosting, JobPostingEnrichment, JobPostingRead
 
 
 def enrich_job_posting(job_posting: JobPosting) -> JobPosting:
+    # https://developers.openai.com/api/docs/guides/structured-outputs
     client = OpenAI()
     response = client.responses.parse(
         model="gpt-5.6",
@@ -18,7 +19,7 @@ def enrich_job_posting(job_posting: JobPosting) -> JobPosting:
             },
             {
                 "role": "user",
-                "content": job_posting.model_dump_json(),
+                "content": JobPostingRead.model_validate(job_posting).model_dump_json(),
             },
         ],
         text_format=JobPostingEnrichment,

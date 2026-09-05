@@ -52,3 +52,27 @@ def test_ingestion_preserves_or_invalidates_cached_enrichment(monkeypatch, sessi
     session.refresh(stored)
     assert stored.qualifications is None
     assert stored.enriched_at is None
+
+
+def test_ingestion_invalidates_only_relevant_embedding_changes(monkeypatch, session):
+    from app.embedding_config import EMBEDDING_VERSION
+
+    stored = posting()
+    stored.embedding = [1.0] + [0.0] * 1535
+    stored.embedding_version = EMBEDDING_VERSION
+    session.add(stored)
+    session.commit()
+    incoming = posting()
+    monkeypatch.setattr(pipeline, "scrape", lambda **kwargs: [incoming])
+    pipeline.ingest_jobs(session)
+    session.refresh(stored)
+    assert stored.embedding is not None
+    incoming.company = "New company name"
+    pipeline.ingest_jobs(session)
+    session.refresh(stored)
+    assert stored.embedding is not None
+    incoming.description = "Changed requirements"
+    pipeline.ingest_jobs(session)
+    session.refresh(stored)
+    assert stored.embedding is None
+    assert stored.embedding_version is None

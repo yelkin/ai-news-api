@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17-alpine
+    image: pgvector/pgvector:pg17
     environment:
       POSTGRES_DB: ainews
       POSTGRES_USER: ainews
@@ -16,7 +16,7 @@ services:
       retries: 10
 
   postgres-test:
-    image: postgres:17-alpine
+    image: pgvector/pgvector:pg17
     environment:
       POSTGRES_DB: ainews_test
       POSTGRES_USER: ainews

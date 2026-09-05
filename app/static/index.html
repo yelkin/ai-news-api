@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Describe your next job. Find relevant opportunities with Job Search.">
+  <title>Job Search — good work is out there</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script type="module" src="/static/search.js"></script>
+</head>
+<body>
+  <header class="search-header">
+    <a class="brand" href="/" aria-label="Job Search home">
+      <svg class="mascot" viewBox="0 0 84 80" role="img" aria-label="A googly-eyed briefcase ready for work">
+        <g transform="rotate(-9 42 40)">
+          <path d="M29 25v-8q0-5 5-5h16q5 0 5 5v8" fill="none" stroke="#323a48" stroke-width="5"/>
+          <rect x="9" y="23" width="66" height="45" rx="12" fill="#ffd46b" stroke="#323a48" stroke-width="3"/>
+          <path d="M10 43q32 14 64 0" fill="none" stroke="#d3a442" stroke-width="2"/>
+          <ellipse cx="32" cy="37" rx="10" ry="12" fill="white" stroke="#323a48" stroke-width="2"/>
+          <ellipse cx="53" cy="34" rx="10" ry="12" fill="white" stroke="#323a48" stroke-width="2"/>
+          <circle cx="35" cy="39" r="4" fill="#323a48"/><circle cx="50" cy="32" r="4" fill="#323a48"/>
+          <path d="M35 55q8 10 16-1" fill="none" stroke="#323a48" stroke-width="3" stroke-linecap="round"/>
+          <path d="m24 68-3 7m37-7 5 7" stroke="#323a48" stroke-width="4" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <span>Job<span class="brand-accent">Search</span><span class="brand-dot">.</span></span>
+    </a>
+    <p class="intro">Good work is out there.<br><span>Let’s find your kind.</span></p>
+    <form id="search-form" class="search-form" role="search">
+      <label class="sr-only" for="query">Describe your next job</label>
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+        <input id="query" name="query" type="search" maxlength="2000" required autocomplete="off" placeholder="Describe your next job…" aria-describedby="search-help">
+        <button id="search-button" class="search-button" type="submit">Search<span aria-hidden="true"> →</span></button>
+      </div>
+      <p id="search-help" class="search-help">Use your own words. A role, a skill, or something you love doing.</p>
+    </form>
+    <div class="examples" aria-label="Example searches">
+      <span>Try</span>
+      <button type="button" data-example="Remote jobs building reliable Python services">Remote Python roles <span aria-hidden="true">↗</span></button>
+      <button type="button" data-example="Work helping customers solve problems">Helping people <span aria-hidden="true">↗</span></button>
+    </div>
+  </header>
+  <main id="search-content" class="search-content" aria-busy="false">
+    <p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+    <section id="error-panel" class="message-panel" hidden aria-labelledby="error-title">
+      <h1 id="error-title">That search hit a snag.</h1>
+      <p id="error-message"></p>
+      <button id="retry-button" class="secondary-button" type="button">Try again</button>
+    </section>
+    <section id="empty-panel" class="message-panel" hidden aria-labelledby="empty-title">
+      <span class="empty-icon" aria-hidden="true">⌕</span>
+      <h1 id="empty-title">No jobs to show just yet.</h1>
+      <p>Try another role or a broader description of the work you’d like to do.</p>
+    </section>
+    <section id="summary-panel" class="summary-panel" hidden aria-labelledby="summary-title">
+      <h1 id="summary-title"><span class="spark" aria-hidden="true">✦</span> Search summary</h1>
+      <p id="summary-text"></p>
+      <div id="citations" class="citations" aria-label="Jobs cited in the summary"></div>
+    </section>
+    <section id="results-panel" hidden aria-label="Job search results">
+      <ol id="results" class="results"></ol>
+    </section>
+    <noscript><p class="message-panel">Enable JavaScript to search for jobs.</p></noscript>
+  </main>
+  <footer><span>Less scrolling. More possibility.</span><span>Job Search <span aria-hidden="true">✦</span></span></footer>
+</body>
+</html>

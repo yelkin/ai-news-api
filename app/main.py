@@ -1,30 +1,48 @@
-from contextlib import asynccontextmanager
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import String, cast, or_, text
 from sqlmodel import Session, select
 
 load_dotenv()
 
-from app.database import create_db_and_tables, get_session  # noqa: E402
 from app.agents.job_posting import enrich_job_posting  # noqa: E402
+from app.database import get_session  # noqa: E402
+from app.embeddings import (  # noqa: E402
+    EmbeddingProvider,
+    embed_missing_jobs,
+    get_embedding_provider,
+)
 from app.pipeline import ingest_jobs  # noqa: E402
 from app.schemas.models import (  # noqa: E402
+    EmbeddingSummary,
     HealthResponse,
     JobPosting,
+    JobPostingRead,
     ScrapeSummary,
+    SearchRequest,
+    SearchResponse,
     utc_now,
 )
+from app.search import (
+    AnswerProvider,
+    SearchProviderError,
+    get_answer_provider,
+    search_jobs,
+)  # noqa: E402
+
+app = FastAPI(title="AI News Jobs API", version="0.1.0")
+STATIC_DIRECTORY = Path(__file__).resolve().parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
 
 
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    create_db_and_tables()
-    yield
-
-
-app = FastAPI(title="AI News Jobs API", version="0.1.0", lifespan=lifespan)
+@app.get("/", response_class=FileResponse, include_in_schema=False)
+def search_page() -> FileResponse:
+    """As a job seeker, I can open a simple page to find relevant job postings."""
+    return FileResponse(STATIC_DIRECTORY / "index.html")
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -49,7 +67,7 @@ def scrape_jobs(
     return ingest_jobs(session, max_pages=max_pages)
 
 
-@app.get("/jobs", response_model=list[JobPosting])
+@app.get("/jobs", response_model=list[JobPostingRead])
 def list_jobs(
     search: str | None = None,
     title: str | None = None,
@@ -81,7 +99,31 @@ def list_jobs(
     return list(session.exec(statement).all())
 
 
-@app.get("/jobs/{job_id}", response_model=JobPosting)
+@app.post("/jobs/embed", response_model=EmbeddingSummary)
+def embed_jobs(
+    max_jobs: int | None = Query(default=None, ge=1),
+    session: Session = Depends(get_session),
+    provider: EmbeddingProvider = Depends(get_embedding_provider),
+) -> EmbeddingSummary:
+    """As a user, I can generate missing job embeddings in bulk, optionally limiting work."""
+    return embed_missing_jobs(session, provider, max_jobs)
+
+
+@app.post("/jobs/search", response_model=SearchResponse)
+def semantic_search(
+    request: SearchRequest,
+    session: Session = Depends(get_session),
+    embed: EmbeddingProvider = Depends(get_embedding_provider),
+    answer: AnswerProvider = Depends(get_answer_provider),
+) -> SearchResponse:
+    """As a user, I can search jobs in natural language and read a grounded answer."""
+    try:
+        return search_jobs(session, request, embed, answer)
+    except SearchProviderError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+
+
+@app.get("/jobs/{job_id}", response_model=JobPostingRead)
 def get_job(job_id: int, session: Session = Depends(get_session)) -> JobPosting:
     job = session.get(JobPosting, job_id)
     if job is None:
@@ -89,7 +131,7 @@ def get_job(job_id: int, session: Session = Depends(get_session)) -> JobPosting:
     return job
 
 
-@app.post("/jobs/{job_id}/enrich", response_model=JobPosting)
+@app.post("/jobs/{job_id}/enrich", response_model=JobPostingRead)
 def enrich_job(
     job_id: int,
     force: bool = False,

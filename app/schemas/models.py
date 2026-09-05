@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, JSON, UniqueConstraint
+from pgvector.sqlalchemy import Vector
+from pydantic import field_validator
+from sqlalchemy import JSON, Column, UniqueConstraint
 from sqlmodel import Field, SQLModel
+
+from app.embedding_config import EMBEDDING_DIMENSIONS
 
 
 def utc_now() -> datetime:
@@ -22,17 +26,32 @@ class JobPostingFields(SQLModel):
     retrieved_at: datetime = Field(default_factory=utc_now)
 
 
-class JobPosting(JobPostingFields, table=True):
-    __tablename__ = "job_postings"
-    __table_args__ = (
-        UniqueConstraint("platform", "source_job_id", name="uq_job_source"),
-    )
-
+class JobPostingRead(JobPostingFields):
     id: int | None = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
     enriched_at: datetime | None = None
     enrichment_error: str | None = None
+
+
+class JobPosting(JobPostingRead, table=True):
+    __tablename__ = "job_postings"
+    __table_args__ = (
+        UniqueConstraint("platform", "source_job_id", name="uq_job_source"),
+    )
+
+    embedding: list[float] | None = Field(
+        default=None, sa_column=Column(Vector(EMBEDDING_DIMENSIONS)), exclude=True
+    )
+    embedding_version: str | None = Field(default=None, exclude=True)
+
+
+class EmbeddingSummary(SQLModel):
+    selected: int = 0
+    embedded: int = 0
+    failed: int = 0
+    skipped: int = 0
+    errors: list[str] = Field(default_factory=list)
 
 
 class JobPostingEnrichment(SQLModel):
@@ -50,3 +69,28 @@ class ScrapeSummary(SQLModel):
 
 class HealthResponse(SQLModel):
     status: str
+
+
+class SearchRequest(SQLModel):
+    query: str = Field(min_length=1, max_length=2000)
+    limit: int = Field(default=5, ge=1, le=20)
+    title: str | None = Field(default=None, max_length=200)
+    company: str | None = Field(default=None, max_length=200)
+    tag: str | None = Field(default=None, max_length=200)
+
+    @field_validator("query")
+    @classmethod
+    def nonblank_query(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Query must not be blank")
+        return value
+
+
+class GroundedAnswer(SQLModel):
+    answer: str
+    cited_job_ids: list[int]
+
+
+class SearchResponse(GroundedAnswer):
+    jobs: list[JobPostingRead]
