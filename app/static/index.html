@@ -7,8 +7,9 @@
   <title>Job Search — good work is out there</title>
   <link rel="stylesheet" href="/static/styles.css">
   <script type="module" src="/static/search.js"></script>
+  <script type="module" src="/static/skill-fit.js"></script>
 </head>
-<body>
+<body class="skill-fit-mode">
   <header class="search-header">
     <a class="brand" href="/" aria-label="Job Search home">
       <svg class="mascot" viewBox="0 0 84 80" role="img" aria-label="A googly-eyed briefcase ready for work">
@@ -26,6 +27,42 @@
       <span>Job<span class="brand-accent">Search</span><span class="brand-dot">.</span></span>
     </a>
     <p class="intro">Good work is out there.<br><span>Let’s find your kind.</span></p>
+    <nav class="search-modes" aria-label="Search mode">
+      <button type="button" data-search-mode="fit" aria-pressed="true">Match my skills</button>
+      <button type="button" data-search-mode="free" aria-pressed="false">Free-text search</button>
+    </nav>
+  </header>
+  <main id="workflow-content">
+    <section id="fit-panel" class="fit-panel" aria-label="Match my skills" aria-busy="false">
+      <h1>Find work that fits your skills.</h1>
+      <label for="fit-titles">Job titles</label>
+      <input id="fit-titles" list="fit-title-suggestions" maxlength="2010" placeholder="Site Reliability Engineer; Platform Engineer" aria-describedby="fit-titles-help">
+      <datalist id="fit-title-suggestions"></datalist>
+      <p id="fit-titles-help" class="fit-help">Choose a suggestion or type your own. Separate up to 10 titles with semicolons.</p>
+      <label for="fit-resume">Your resume (.txt)</label>
+      <input id="fit-resume" type="file" accept=".txt,text/plain" aria-describedby="fit-resume-help">
+      <p id="fit-resume-help" class="fit-help">UTF-8 text, up to 64 KiB. Extraction sends your resume to OpenAI. We do not save your resume or personal skill selection.</p>
+      <button id="fit-extract" class="secondary-button" type="button">Extract qualifications</button>
+      <section id="fit-review" hidden tabindex="-1" aria-label="Review your qualifications">
+        <h2>Review your qualifications</h2>
+        <p class="fit-help">Remove anything that does not reflect your experience, or add a qualification.</p>
+        <div id="fit-skills" class="skill-chips"></div>
+        <label for="fit-add-skill">Add a qualification</label>
+        <div class="fit-add-row"><input id="fit-add-skill" list="fit-skill-suggestions" maxlength="200" placeholder="e.g. Kubernetes"><button id="fit-add-button" class="secondary-button" type="button">Add</button></div>
+        <datalist id="fit-skill-suggestions"></datalist>
+      </section>
+      <label class="fit-checkbox"><input id="fit-refresh" type="checkbox" checked> Refresh job postings before matching</label>
+      <p class="fit-help">New or changed matching jobs need qualification extraction. Preparation uses OpenAI and can take several minutes; completed work is reused.</p>
+      <div class="fit-actions">
+        <button id="fit-find" class="search-button" type="button">Find matching jobs →</button>
+        <button id="fit-stop" class="secondary-button" type="button" hidden>Stop after this step</button>
+        <button id="fit-continue" class="secondary-button" type="button" hidden>Continue with stored jobs</button>
+        <button id="fit-retry-preparation" class="secondary-button" type="button" hidden>Retry preparation</button>
+      </div>
+      <p id="fit-status" role="status" aria-live="polite" aria-atomic="true"></p>
+      <ol id="fit-results" class="results" aria-label="Jobs ranked by qualification coverage"></ol>
+    </section>
+    <div id="free-search-panel" hidden>
     <form id="search-form" class="search-form" role="search">
       <label class="sr-only" for="query">Describe your next job</label>
       <div class="search-box">
@@ -40,8 +77,8 @@
       <button type="button" data-example="Remote jobs building reliable Python services">Remote Python roles <span aria-hidden="true">↗</span></button>
       <button type="button" data-example="Work helping customers solve problems">Helping people <span aria-hidden="true">↗</span></button>
     </div>
-  </header>
-  <main id="search-content" class="search-content" aria-busy="false">
+    </div>
+  <section hidden id="search-content" class="search-content" aria-busy="false">
     <p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
     <section id="error-panel" class="message-panel" hidden aria-labelledby="error-title">
       <h1 id="error-title">That search hit a snag.</h1>
@@ -61,6 +98,7 @@
     <section id="results-panel" hidden aria-label="Job search results">
       <ol id="results" class="results"></ol>
     </section>
+  </section>
     <noscript><p class="message-panel">Enable JavaScript to search for jobs.</p></noscript>
   </main>
   <footer><span>Less scrolling. More possibility.</span><span>Job Search <span aria-hidden="true">✦</span></span></footer>

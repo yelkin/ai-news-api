@@ -68,43 +68,57 @@ def test_scrape_endpoint_returns_summary(client, monkeypatch, capsys):
     assert "http://testserver/jobs/scrape?max_pages=1" in capsys.readouterr().out
 
 
-def test_enrichment_is_lazy_cached_and_forceable(client, session, monkeypatch):
-    from app import main
+def test_enrichment_is_lazy_cached_and_forceable(client, session):
+    from app.main import app
+    from app.qualifications import get_qualification_provider
 
     add_jobs(session)
     job_id = client.get("/jobs").json()[0]["id"]
     calls = []
 
-    def enrich(job):
-        calls.append(job.id)
-        job.qualifications = ["Kubernetes"]
-        return job
+    def provider(kind, payload):
+        if kind == "extract":
+            calls.append(kind)
+            return {"qualifications": ["Kubernetes"]}
+        return {
+            "choices": [
+                {
+                    "label": label,
+                    "qualification_id": payload["candidates"][0]["id"]
+                    if payload["candidates"]
+                    else None,
+                    "canonical_name": "Kubernetes",
+                }
+                for label in payload["labels"]
+            ]
+        }
 
-    monkeypatch.setattr(main, "enrich_job_posting", enrich)
-
+    app.dependency_overrides[get_qualification_provider] = lambda: provider
     first = client.post(f"/jobs/{job_id}/enrich")
     cached = client.post(f"/jobs/{job_id}/enrich")
     forced = client.post(f"/jobs/{job_id}/enrich", params={"force": True})
-
-    assert first.status_code == 200
+    assert first.status_code == 200, first.text
     assert first.json()["qualifications"] == ["Kubernetes"]
     assert cached.status_code == 200
     assert forced.status_code == 200
-    assert calls == [job_id, job_id]
+    assert len(calls) == 2
 
 
-def test_enrichment_failure_is_persisted(client, session, monkeypatch):
-    from app import main
+def test_enrichment_failure_is_persisted(client, session):
+    from app.main import app
+    from app.qualifications import get_qualification_provider
 
     add_jobs(session)
     job_id = client.get("/jobs").json()[0]["id"]
 
-    def fail(job):
-        raise ValueError("model unavailable")
+    def fail(kind, payload):
+        raise ValueError("provider error with private data")
 
-    monkeypatch.setattr(main, "enrich_job_posting", fail)
+    app.dependency_overrides[get_qualification_provider] = lambda: fail
     response = client.post(f"/jobs/{job_id}/enrich")
-
     assert response.status_code == 502
     session.expire_all()
-    assert session.get(JobPosting, job_id).enrichment_error == "model unavailable"
+    assert (
+        session.get(JobPosting, job_id).enrichment_error
+        == "Qualification extraction failed; retry preparation."
+    )

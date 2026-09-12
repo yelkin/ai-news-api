@@ -9,7 +9,6 @@ from sqlmodel import Session, select
 
 load_dotenv()
 
-from app.agents.job_posting import enrich_job_posting  # noqa: E402
 from app.database import get_session  # noqa: E402
 from app.embeddings import (  # noqa: E402
     EmbeddingProvider,
@@ -17,6 +16,7 @@ from app.embeddings import (  # noqa: E402
     get_embedding_provider,
 )
 from app.pipeline import ingest_jobs  # noqa: E402
+from app.qualifications import get_qualification_provider  # noqa: E402
 from app.schemas.models import (  # noqa: E402
     EmbeddingSummary,
     HealthResponse,
@@ -25,7 +25,6 @@ from app.schemas.models import (  # noqa: E402
     ScrapeSummary,
     SearchRequest,
     SearchResponse,
-    utc_now,
 )
 from app.search import (
     AnswerProvider,
@@ -33,10 +32,13 @@ from app.search import (
     get_answer_provider,
     search_jobs,
 )  # noqa: E402
+from app.skill_fit import enrich_canonical_job  # noqa: E402
+from app.skill_fit_routes import router as skill_fit_router  # noqa: E402
 
 app = FastAPI(title="AI News Jobs API", version="0.1.0")
 STATIC_DIRECTORY = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
+app.include_router(skill_fit_router)
 
 
 @app.get("/", response_class=FileResponse, include_in_schema=False)
@@ -136,31 +138,17 @@ def enrich_job(
     job_id: int,
     force: bool = False,
     session: Session = Depends(get_session),
+    provider=Depends(get_qualification_provider),
 ) -> JobPosting:
-    job = session.get(JobPosting, job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail="Job posting not found")
-    if job.qualifications is not None and not force:
-        return job
-
+    """As a user, I extract canonical job qualifications lazily or force a refresh."""
+    if session.get(JobPosting, job_id) is None:
+        raise HTTPException(404, "Job posting not found")
     try:
-        enriched = enrich_job_posting(job)
-        job.qualifications = enriched.qualifications
-        job.enriched_at = utc_now()
-        job.enrichment_error = None
-        job.updated_at = utc_now()
-        session.add(job)
-        session.commit()
-        session.refresh(job)
+        if not enrich_canonical_job(session, job_id, provider, force):
+            raise HTTPException(409, "Job changed during extraction; retry.")
+    except HTTPException:
+        raise
     except Exception as error:
-        session.rollback()
-        job = session.get(JobPosting, job_id)
-        job.enrichment_error = str(error)
-        job.updated_at = utc_now()
-        session.add(job)
-        session.commit()
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Job enrichment failed",
-        ) from error
-    return job
+        raise HTTPException(502, "Job enrichment failed") from error
+    session.expire_all()
+    return session.get(JobPosting, job_id)

@@ -11,6 +11,7 @@ from sqlmodel import Session, select
 from app.embedding_config import EMBEDDING_VERSION
 from app.embeddings import (
     EmbeddingProvider,
+    normalize_vectors,
     plain_text,
     tokenize,
     truncate,
@@ -122,7 +123,7 @@ def search_jobs(
     if not has_candidates:
         return empty
     try:
-        vectors = embed([request.query])
+        vectors = normalize_vectors(embed([request.query]))
         validate_vectors(vectors, 1)
     except Exception as error:
         logger.exception("Search query embedding failed")
@@ -130,7 +131,7 @@ def search_jobs(
     jobs = list(
         session.exec(
             statement.order_by(
-                JobPosting.embedding.cosine_distance(vectors[0]), JobPosting.id
+                JobPosting.embedding.max_inner_product(vectors[0]), JobPosting.id
             ).limit(request.limit)
         ).all()
     )

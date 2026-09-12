@@ -1,0 +1,70 @@
+Pavel Elkin
+Senior Site Reliability Engineer / Senior Platform Engineer
+Berlin, Germany
++49 176 753 11 329
+p.yelkin@gmail.com
+LinkedIn: https://www.linkedin.com/in/pavel-elkin/
+Professional Summary
+Site Reliability Engineer with 15+ years of experience designing and operating platform and observability infrastructure. Experienced in building self-service platforms, automating operations, improving production reliability and infrastructure automation.
+Technologies
+Programming: Python, Java, Go
+Backend & Frameworks: FastAPI, Dramatiq, Django, Spring, Backstage, React
+Platforms: AWS, Kubernetes, Linux
+Networking: Load Balancers, keepalived, Envoy, HAProxy, NGINX, Squid
+Infrastructure Automation & Configuration: Terraform, Ansible, SaltStack
+CI:Jenkins, ArgoCD, ArgoWorkflows
+Observability: Datadog,  Grafana, Prometheus, OpenTelemetry
+Databases: PostgreSQL, Redis
+Identity & Access: Keycloak SAML SSO
+Other: Agile approaches, customer focus, on-call, incident response.
+Professional Experience
+Nebius
+Network Site Reliability Engineer | 2025–Present
+Led the development of a complete isolated test environment mirroring production for the company’s core layer 3 load balancer service based on bare-metal Linux, keepalived and IPVS. I was responsible for designing and deploying the servers, designing and deploying isolated networking configuration in coordination with the networking team. The environment was used by other developers to load test and perform a migration to a new load balancer implementation.
+Identified a customer issue with Layer 3 Load Balancer and led the developed graceful shutdown logic in keepalived allowing clean termination for attached kubernetes service pods. Provided user documentation was used by multiple customers to identify issues and implement graceful shutdown in their services.
+Programmatic SaltStack API Access: Implemented authenticated programmatic access to the SaltStack control plane using Keycloak, OAuth2 Proxy, SAML SSO, and Python, enabling CI-driven deployments to bare-metal load balancers and eliminating approximately one engineer-day of manual deployment work per week.
+On-call runbook
+LDrie documentation
+Klarna
+Platform Engineer, Observability | 2020–2025
+Log Router: Co-designed and developed a company-wide log routing platform using Vector and Python that decoupled applications from individual observability vendors, enabling new providers to be integrated without application changes, shortening provider POCs from quarters to about one month, and contributing to multimillion-scale observability cost savings.
+Delayed Log Ingestion Service: Designed and implemented a self-service log archival and on-demand indexing service using Python, FastAPI, Redis, React, and Backstage, allowing engineers to make logs searchable within minutes while reducing continuously indexed log volume by more than 20% and lowering both vendor costs and platform support workload.
+Terraform CI Pipeline: Built a pull-request-integrated Terraform and Make CI pipeline for Log Router infrastructure, replacing a manual deployment process and saving approximately one full developer-day per deployment while making infrastructure changes reviewable and repeatable.
+Log Router Migration to Kubernetes: Migrated Log Router from AWS EC2 to Kubernetes using Terraform and Argo CD, reducing deployment time from hours to minutes and significantly decreasing developer effort required for routine releases.
+Automated Alert Management Service: Reworked the CI and testing workflow for a centralized AWS ALB alerting service using Python automation, Datadog burn-rate alerts, and PostgreSQL reporting, making an inherited multi-repository system automatically deployable and testable and unblocking migration of business reporting to a new storage backend.
+Yandex.Market
+Site Reliability Engineer, Layer 7 Load Balancer | 2017–2020
+Layer 7 Load Balancer CI Pipeline: Designed and implemented a Java-based CI workflow in a monorepo for generating and testing Layer 7 load balancer configurations, reducing provisioning lead time for product teams from roughly one week to one day and eliminating much of the manual work and configuration risk handled by on-call SREs.
+Layer 7 Load Balancer On-call Management: Operated centralized monitoring and first-line on-call for company-wide Layer 7 load balancers, defining alerts for errors, latency, and traffic drops and triaging incidents to the responsible teams to provide consistent operational coverage across services.
+Ideco
+Software / Infrastructure Engineer | 2012–2017
+Content Filtering System: Developed a Python-based content filtering system integrated with Squid for a corporate gateway product, enforcing policy-based Internet access for users and providing a core security and access-control capability.
+Network Configuration Backend: Developed Python backend services for configuring networking features in the corporate gateway product, providing the application logic and automation required to manage customer network settings.
+Product Key Website: Built a customer-facing Django application for managing corporate gateway product keys, providing customers with a self-service interface for licensing-related operations.
+Inango
+Software Engineer | 2010–2012
+Embedded HPNA Network Management Backend: Developed network management functionality for embedded Internet-over-coaxial devices using Lua and Bash, implementing backend and automation components used to configure and operate HPNA networking hardware.
+MGP
+On-call Administrator | 2009-2010
+On-call duty: coordinate road warrior engineers and payment terminal fixes.
+Daily Money Movement Reporting: Automated generation of a daily financial movement report using Perl to process XLS and CSV inputs, replacing repetitive manual report preparation with a consistent automated workflow.
+Education
+Ural State University | 2004–2009
+Bachelor of Applied Mathematics - unfinished
+
+Scratchpad
+Layer 3 Load Balancer Test Environment: Designed and implemented an isolated production-like test environment on dedicated bare-metal Linux hardware using SaltStack, keepalived, and Kubernetes, allowing networking changes to be validated before production and reducing deployment-related incidents.
+Led the development of a complete isolated test environment mirroring production for the company’s core layer 3 load balancer service based on bare-metal Linux, keepalived and IPVS. I was responsible for designing and deploying the servers, designing and deploying isolated networking configuration in coordination with the networking team. The environment was used by other developers to load test and perform a migration to a new load balancer implementation.
+
+
+Graceful Shutdown for Kubernetes Services: Redesigned the interaction between Kubernetes pod termination and keepalived-based Layer 3 load balancing, eliminating transient customer-facing API errors during rollouts and other pod shutdowns.
+Identified a customer issue with Layer 3 Load Balancer and led the developed graceful shutdown logic in keepalived allowing clean termination for attached kubernetes service pods. Provided user documentation was used by multiple customers to identify issues and implement graceful shutdown in their services.
+
+Lead with impact, not duty
+Add scale and numbers
+Name tools in context
+Show proactive ownership
+Tailor to the job
+Cut jargon and cliches
+
+Programmatic SaltStack API Access: Implemented authenticated programmatic access to the SaltStack control plane using Keycloak, OAuth2 Proxy, SAML SSO, and Python, enabling CI-driven deployments to bare-metal load balancers and eliminating approximately one engineer-day of manual deployment work per week.

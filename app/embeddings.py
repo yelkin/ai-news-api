@@ -104,6 +104,15 @@ def validate_vectors(vectors: Sequence[Sequence[float]], count: int) -> None:
             raise ValueError("Embedding must be a finite nonzero vector")
 
 
+def normalize_vectors(vectors):
+    validate_vectors(vectors, len(vectors))
+    result = []
+    for row in vectors:
+        norm = math.sqrt(sum(float(x) ** 2 for x in row))
+        result.append([float(v) / norm for v in row])
+    return result
+
+
 def ordered_vectors(data, count: int) -> list[list[float]]:
     """Associate provider output with input positions, independent of result order."""
     if sorted(item.index for item in data) != list(range(count)):
@@ -168,7 +177,7 @@ def embed_missing_jobs(
             batch = [rows[i] for i in indexes]
             summary.selected += len(batch)
             try:
-                vectors = provider([texts[i] for i in indexes])
+                vectors = normalize_vectors(provider([texts[i] for i in indexes]))
                 validate_vectors(vectors, len(batch))
                 written = 0
                 for row, vector in zip(batch, vectors, strict=True):

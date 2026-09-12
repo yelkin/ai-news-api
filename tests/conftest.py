@@ -31,6 +31,8 @@ def session():
     config = Config("alembic.ini")
     try:
         with engine.begin() as connection:
+            connection.execute(text("DROP TABLE IF EXISTS job_qualifications"))
+            connection.execute(text("DROP TABLE IF EXISTS qualifications"))
             connection.execute(text("DROP TABLE IF EXISTS job_postings"))
             connection.execute(text("DROP TABLE IF EXISTS alembic_version"))
             config.attributes["connection"] = connection
@@ -39,6 +41,8 @@ def session():
             yield session
     finally:
         with engine.begin() as connection:
+            connection.execute(text("DROP TABLE IF EXISTS job_qualifications"))
+            connection.execute(text("DROP TABLE IF EXISTS qualifications"))
             connection.execute(text("DROP TABLE IF EXISTS job_postings"))
             connection.execute(text("DROP TABLE IF EXISTS alembic_version"))
         engine.dispose()

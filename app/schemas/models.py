@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 
 from pgvector.sqlalchemy import Vector
 from pydantic import field_validator
-from sqlalchemy import JSON, Column, UniqueConstraint
+from sqlalchemy import JSON, Column, Computed, Index, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlmodel import Field, SQLModel
 
 from app.embedding_config import EMBEDDING_DIMENSIONS
@@ -38,7 +39,34 @@ class JobPosting(JobPostingRead, table=True):
     __tablename__ = "job_postings"
     __table_args__ = (
         UniqueConstraint("platform", "source_job_id", name="uq_job_source"),
+        Index("ix_jobs_fts", "fts", postgresql_using="gin"),
+        Index("ix_jobs_metadata", "metadata", postgresql_using="gin"),
+        Index(
+            "ix_jobs_embedding_ip",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_ip_ops"},
+        ),
     )
+
+    content: str | None = Field(default=None, sa_column=Column(Text), exclude=True)
+    search_metadata: dict = Field(
+        default_factory=dict,
+        sa_column=Column("metadata", JSONB, nullable=False, server_default="{}"),
+        exclude=True,
+    )
+    fts: str | None = Field(
+        default=None,
+        sa_column=Column(
+            TSVECTOR,
+            Computed(
+                "to_tsvector('simple'::regconfig, coalesce(content, ''))",
+                persisted=True,
+            ),
+        ),
+        exclude=True,
+    )
+    qualification_version: str | None = Field(default=None, exclude=True)
 
     embedding: list[float] | None = Field(
         default=None, sa_column=Column(Vector(EMBEDDING_DIMENSIONS)), exclude=True

@@ -1,6 +1,9 @@
+from sqlalchemy import delete
 from sqlmodel import Session, select
 
+from app.embeddings import plain_text
 from app.schemas.models import JobPosting, ScrapeSummary, utc_now
+from app.schemas.skill_fit import JobQualification
 from app.scrapers.arbeitnow import scrape
 
 SOURCE_FIELDS = {
@@ -27,11 +30,17 @@ def ingest_jobs(
 
     for posting in postings:
         try:
+            posting.content = plain_text(posting.title + " " + posting.description)
+            posting.search_metadata = posting.model_dump(
+                include={"platform", "company", "location", "remote", "tags"}
+            )
             existing = session.exec(
-                select(JobPosting).where(
+                select(JobPosting)
+                .where(
                     JobPosting.platform == posting.platform,
                     JobPosting.source_job_id == posting.source_job_id,
                 )
+                .with_for_update()
             ).one_or_none()
 
             if existing is None:
@@ -51,7 +60,15 @@ def ingest_jobs(
                     existing.embedding_version = None
                 values = posting.model_dump(include=SOURCE_FIELDS | {"retrieved_at"})
                 existing.sqlmodel_update(values)
+                existing.content = posting.content
+                existing.search_metadata = posting.search_metadata
                 if changed:
+                    session.execute(
+                        delete(JobQualification).where(
+                            JobQualification.job_id == existing.id
+                        )
+                    )
+                    existing.qualification_version = None
                     existing.qualifications = None
                     existing.enriched_at = None
                     existing.enrichment_error = None

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, pool
 from sqlmodel import SQLModel
 
-from app.schemas import models  # noqa: F401
+from app.schemas import models, skill_fit  # noqa: F401
 
 load_dotenv()
 config = context.config
