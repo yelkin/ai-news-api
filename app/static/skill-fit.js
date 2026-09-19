@@ -1,12 +1,7 @@
 import { safeSourceUrl } from './result-data.js';
+import { parseTitles } from './job-workflow.js';
 
-export function parseTitles(value) {
-  const titles = [...new Set(value.split(';').map(t => t.trim()).filter(Boolean))];
-  if (!titles.length || titles.length > 10 || titles.some(t => t.length > 200)) {
-    throw Error('Enter 1–10 job titles, each at most 200 characters. Separate titles with semicolons.');
-  }
-  return titles;
-}
+export { parseTitles } from './job-workflow.js';
 
 export function validateResumeFile(file) {
   if (!file || !file.name.toLowerCase().endsWith('.txt') || !file.size || file.size > 65536) {
@@ -14,35 +9,10 @@ export function validateResumeFile(file) {
   }
 }
 
-/** Resume successful phases on retry; each completed batch is already committed. */
-export async function runFit(request, api, progress = () => {}, stopped = () => false, state = {}) {
-  const check = () => { if (stopped()) throw Error('Stopped. Choose Find matching jobs to resume.'); };
-  check();
-  if (request.refresh && !state.refreshed) {
-    progress('Fetching job postings…');
-    try {
-      const summary = await api('/jobs/scrape', {});
-      state.refreshed = true;
-      if (summary.failed) progress(`Refresh finished with ${summary.failed} failures. Preparing stored jobs…`);
-    } catch (error) {
-      error.refreshFailed = true;
-      throw error;
-    }
-  }
-  check();
-  while (!state.prepared) {
-    progress(`Preparing matching jobs… ${state.processed || 0} processed, ${state.failed || 0} failures.`);
-    const batch = await api('/jobs/prepare', {titles: request.titles, cursor: state.cursor || null});
-    state.cursor = batch.next_cursor;
-    state.prepared = batch.complete;
-    state.processed = (state.processed || 0) + batch.processed;
-    state.failed = (state.failed || 0) + batch.failed;
-    check();
-  }
+/** Search only already-prepared postings; maintenance runs on /jobs/manage. */
+export async function runFit(request, api, progress = () => {}) {
   progress('Comparing your qualifications…');
-  const result = await api('/jobs/fit', {titles: request.titles, qualification_ids: request.qualification_ids, limit: 10});
-  check();
-  return result;
+  return api('/jobs/fit', {titles: request.titles, qualification_ids: request.qualification_ids, limit: 10});
 }
 
 async function api(path, body) {
@@ -72,15 +42,13 @@ function node(tag, text, className = '') {
 function setup() {
   const $ = id => document.getElementById(id);
   const panel = $('fit-panel'), status = $('fit-status');
-  let skills = [], busy = false, generation = 0, stop = false, state = {}, titleTimer, titleSequence = 0;
+  let skills = [], busy = false, generation = 0, titleTimer, titleSequence = 0;
   const announce = text => { status.textContent = text; };
-  function reset() { generation++; state = {}; $('fit-results').replaceChildren(); $('fit-retry-preparation').hidden = true; }
+  function reset() { generation++; $('fit-results').replaceChildren(); $('fit-manage-link').hidden = true; }
   function setBusy(value) {
     busy = value;
     panel.setAttribute('aria-busy', String(value));
     for (const el of panel.querySelectorAll('input, button')) el.disabled = value;
-    $('fit-stop').disabled = !value;
-    $('fit-stop').hidden = !value;
   }
   function renderSkills() {
     $('fit-skills').replaceChildren(...skills.map(skill => {
@@ -112,14 +80,12 @@ function setup() {
       } catch { /* Free-text titles remain usable without suggestions. */ }
     }, 200);
   });
-  $('fit-resume').addEventListener('change', () => { reset(); skills = []; $('fit-review').hidden = true; });
-  $('fit-refresh').addEventListener('change', reset);
-  $('fit-stop').addEventListener('click', () => { stop = true; announce('Stopping after the current step…'); });
-  $('fit-extract').addEventListener('click', async () => {
+  $('fit-resume').addEventListener('change', extractResume);
+  async function extractResume() {
     if (busy) return;
+    reset(); skills = []; $('fit-review').hidden = true;
     const version = generation;
     try {
-      parseTitles($('fit-titles').value);
       const file = $('fit-resume').files[0];
       validateResumeFile(file);
       setBusy(true); announce('Extracting your resume qualifications…');
@@ -127,13 +93,12 @@ function setup() {
       const data = await api('/resume/qualifications', {text});
       if (version !== generation) return;
       skills = data.qualifications;
-      state = {};
       renderSkills();
       announce(skills.length ? 'Review your qualifications, then find matching jobs.' : 'No qualifications found. Add a qualification or try a more detailed resume.');
       $('fit-review').focus();
     } catch (error) { announce(error.message); }
     finally { setBusy(false); }
-  });
+  }
   let skillSequence = 0;
   $('fit-add-skill').addEventListener('input', async () => {
     const seq = ++skillSequence;
@@ -161,8 +126,9 @@ function setup() {
   });
   function renderResults(data) {
     const counts = data.counts;
-    const messages = {no_candidates:'No stored jobs match those titles. Refresh postings or broaden your titles.', preparation_needed:'Matching jobs need preparation. Retry preparation to finish.', no_overlap:'No evidenced qualification overlap was found. Review your skills or broaden your titles.'};
-    announce(`${messages[data.state] || `${data.results.length} matches, ordered by qualification coverage.`} ${counts.prepared} scored, ${counts.pending} pending, ${counts.failed} failed, ${counts.empty} without extracted requirements.${data.semantic_tiebreak_available ? '' : ' Semantic tie-breaking unavailable.'}${state.failed ? ` ${state.failed} preparation steps failed; available qualifications are still scored.` : ''}`);
+    const messages = {no_candidates:'No stored jobs match those titles. Update job data or broaden your titles.', preparation_needed:'Matching jobs need preprocessing on the job-data page.', no_overlap:'No evidenced qualification overlap was found. Review your skills or broaden your titles.'};
+    announce(`${messages[data.state] || `${data.results.length} matches, ordered by qualification coverage.`} ${counts.prepared} scored, ${counts.pending} pending, ${counts.failed} failed, ${counts.empty} without extracted requirements.${data.semantic_tiebreak_available ? '' : ' Semantic tie-breaking unavailable.'}`);
+    $('fit-manage-link').hidden = !(data.state === 'preparation_needed' || counts.pending || counts.failed);
     $('fit-results').replaceChildren(...data.results.map(result => {
       const item = node('li', '', 'result');
       item.append(node('p', result.job.company, 'company-name'), node('h2', result.job.title));
@@ -174,7 +140,6 @@ function setup() {
       if (url) { const link = node('a', 'Original posting'); link.href = url; link.className = 'fit-original'; item.append(link); }
       return item;
     }));
-    $('fit-retry-preparation').hidden = !(counts.pending || counts.failed || state.failed);
   }
   async function find() {
     if (busy) return;
@@ -182,17 +147,14 @@ function setup() {
     try {
       const titles = parseTitles($('fit-titles').value);
       if (!skills.length) throw Error('Extract or add at least one qualification first.');
-      stop = false; setBusy(true); $('fit-continue').hidden = true;
-      const data = await runFit({titles, qualification_ids:skills.map(q => q.id), refresh:$('fit-refresh').checked}, api, announce, () => stop || version !== generation, state);
+      setBusy(true);
+      const data = await runFit({titles, qualification_ids:skills.map(q => q.id)}, api, announce);
       if (version === generation) renderResults(data);
     } catch (error) {
-      announce(error.refreshFailed ? 'Refresh failed. Retry or continue with stored jobs.' : error.message);
-      $('fit-continue').hidden = !error.refreshFailed;
+      announce(error.message);
     } finally { setBusy(false); }
   }
   $('fit-find').addEventListener('click', find);
-  $('fit-continue').addEventListener('click', () => { state.refreshed = true; find(); });
-  $('fit-retry-preparation').addEventListener('click', () => { state = {refreshed:state.refreshed}; find(); });
   for (const button of document.querySelectorAll('[data-search-mode]')) button.addEventListener('click', () => {
     if (busy) return;
     const fit = button.dataset.searchMode === 'fit';

@@ -47,6 +47,12 @@ def search_page() -> FileResponse:
     return FileResponse(STATIC_DIRECTORY / "index.html")
 
 
+@app.get("/jobs/manage", response_class=FileResponse, include_in_schema=False)
+def manage_jobs_page() -> FileResponse:
+    """As a maintainer, I can refresh and preprocess job data separately."""
+    return FileResponse(STATIC_DIRECTORY / "job-data.html")
+
+
 @app.get("/health", response_model=HealthResponse)
 def health(session: Session = Depends(get_session)) -> HealthResponse:
     try:

@@ -58,8 +58,8 @@ def test_search_assets_have_correct_types_and_safe_file_boundaries():
         assert client.get("/static/%2e%2e/main.py").status_code == 404
 
 
-def test_skill_fit_page_exposes_review_refresh_and_retry_workflow():
-    """As a job seeker, I can review extracted skills and choose whether to refresh jobs."""
+def test_skill_fit_page_searches_prepared_jobs_without_maintenance_controls():
+    """As a job seeker, I upload a resume and search only prepared jobs."""
     with TestClient(app) as client:
         page = PageElements()
         page.feed(client.get("/").text)
@@ -72,17 +72,20 @@ def test_skill_fit_page_exposes_review_refresh_and_retry_workflow():
         assert sum(tag == "main" for tag, attrs in page.elements) == 1
         assert ids["fit-titles"][1]["list"] == "fit-title-suggestions"
         assert ids["fit-resume"][1]["type"] == "file"
-        assert "checked" in ids["fit-refresh"][1]
         assert ids["fit-status"][1]["aria-live"] == "polite"
         assert {
-            "fit-extract",
             "fit-review",
             "fit-add-button",
             "fit-find",
+            "fit-manage-link",
+        } <= ids.keys()
+        assert {
+            "fit-extract",
+            "fit-refresh",
             "fit-continue",
             "fit-stop",
             "fit-retry-preparation",
-        } <= ids.keys()
+        }.isdisjoint(ids)
         paths = client.get("/openapi.json").json()["paths"]
         assert {
             "/jobs/titles",
@@ -92,3 +95,23 @@ def test_skill_fit_page_exposes_review_refresh_and_retry_workflow():
             "/jobs/fit",
         } <= paths.keys()
         assert client.get("/static/skill-fit.js").status_code == 200
+
+
+def test_job_data_page_exposes_refresh_and_preparation_workflow():
+    """As a maintainer, I refresh and preprocess postings on a dedicated page."""
+    with TestClient(app) as client:
+        response = client.get("/jobs/manage")
+        assert response.status_code == 200
+        page = PageElements()
+        page.feed(response.text)
+        ids = {
+            attrs.get("id"): (tag, attrs)
+            for tag, attrs in page.elements
+            if attrs.get("id")
+        }
+        assert ids["job-data-content"][0] == "main"
+        assert ids["update-titles"][1]["list"] == "update-title-suggestions"
+        assert ids["update-status"][1]["aria-live"] == "polite"
+        assert {"update-start", "update-stop", "update-retry"} <= ids.keys()
+        assert client.get("/static/job-data.js").status_code == 200
+        assert client.get("/static/job-workflow.js").status_code == 200

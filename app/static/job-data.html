@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Refresh and prepare stored job postings.">
+  <title>Update job data — Job Search</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script type="module" src="/static/job-data.js"></script>
+</head>
+<body class="job-data-mode">
+  <header class="search-header compact-header">
+    <a class="brand" href="/" aria-label="Job Search home">Job<span class="brand-accent">Search</span><span class="brand-dot">.</span></a>
+    <nav class="search-modes" aria-label="Main navigation"><a class="mode-link" href="/">Search jobs</a></nav>
+  </header>
+  <main id="job-data-content" class="fit-panel">
+    <h1>Update job data</h1>
+    <p class="fit-help">Refresh stored postings, then extract qualifications and embeddings for the job titles you want to search.</p>
+    <label for="update-titles">Job titles to prepare</label>
+    <input id="update-titles" list="update-title-suggestions" maxlength="2010" placeholder="Site Reliability Engineer; Platform Engineer" aria-describedby="update-titles-help">
+    <datalist id="update-title-suggestions"></datalist>
+    <p id="update-titles-help" class="fit-help">Choose a suggestion or enter up to 10 titles separated with semicolons.</p>
+    <div class="fit-actions">
+      <button id="update-start" class="search-button" type="button">Refresh and prepare jobs</button>
+      <button id="update-stop" class="secondary-button" type="button" hidden>Stop after this batch</button>
+      <button id="update-retry" class="secondary-button" type="button" hidden>Resume update</button>
+    </div>
+    <p id="update-status" role="status" aria-live="polite" aria-atomic="true"></p>
+  </main>
+  <footer><span>Job data maintenance</span><span><a href="/">Back to search</a></span></footer>
+</body>
+</html>
