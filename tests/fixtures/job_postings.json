@@ -1,0 +1,35 @@
+[
+  {
+    "platform": "fixture",
+    "source_job_id": "python-engineer",
+    "source_url": "https://example.test/jobs/python-engineer",
+    "company": "Application Works",
+    "title": "Python Engineer",
+    "description": "Required qualifications:\n- Python\n- Django\n- PostgreSQL",
+    "location": "Berlin",
+    "remote": true,
+    "tags": ["Python", "Django"]
+  },
+  {
+    "platform": "fixture",
+    "source_job_id": "site-reliability-engineer",
+    "source_url": "https://example.test/jobs/site-reliability-engineer",
+    "company": "Reliable Systems",
+    "title": "Site Reliability Engineer",
+    "description": "Required qualifications:\n- Python\n- Linux\n- Kubernetes",
+    "location": "Berlin",
+    "remote": true,
+    "tags": ["SRE", "Python", "Kubernetes"]
+  },
+  {
+    "platform": "fixture",
+    "source_job_id": "senior-site-reliability-engineer",
+    "source_url": "https://example.test/jobs/senior-site-reliability-engineer",
+    "company": "Scale Operations",
+    "title": "Senior Site Reliability Engineer",
+    "description": "Required qualifications:\n- Python\n- Linux\n- Kubernetes\n- Terraform\n- AWS\n- Prometheus",
+    "location": "Munich",
+    "remote": false,
+    "tags": ["SRE", "Terraform", "AWS"]
+  }
+]
