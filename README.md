@@ -7,6 +7,10 @@ qualification extraction starts automatically when a valid file is selected.
 Refresh and preprocess stored postings separately at `/jobs/manage`; see
 [Updating job data](docs/job-data-maintenance.md).
 
+For development, the search page's bottom-right **Debug toolbar** displays the
+raw HTTP request and response history for the current page session. See
+[Debug toolbar](docs/debug-toolbar.md), including its note about resume data.
+
 ## Run the tests
 
 The test target starts a dedicated PostgreSQL container and runs the suite:

@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/static/styles.css">
   <script type="module" src="/static/search.js"></script>
   <script type="module" src="/static/skill-fit.js"></script>
+  <script type="module" src="/static/debug-toolbar.js"></script>
 </head>
 <body class="skill-fit-mode">
   <header class="search-header">
@@ -98,5 +99,14 @@
     <noscript><p class="message-panel">Enable JavaScript to search for jobs.</p></noscript>
   </main>
   <footer><span>Less scrolling. More possibility.</span><span>Job Search <span aria-hidden="true">✦</span></span></footer>
+  <button id="debug-open" class="debug-trigger" type="button">Debug toolbar</button>
+  <dialog id="debug-dialog" class="debug-dialog" aria-labelledby="debug-title">
+    <header>
+      <div><h2 id="debug-title">Debug toolbar</h2><p id="debug-count"></p></div>
+      <button id="debug-close" class="secondary-button" type="button">Close</button>
+    </header>
+    <p id="debug-empty">No HTTP requests have been made in this search session.</p>
+    <ol id="debug-entries" class="debug-entries" aria-label="Raw HTTP exchanges"></ol>
+  </dialog>
 </body>
 </html>

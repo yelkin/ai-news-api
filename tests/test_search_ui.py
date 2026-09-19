@@ -44,6 +44,29 @@ def test_search_page_and_assets_are_available():
         assert "/jobs/search" in client.get("/openapi.json").json()["paths"]
 
 
+def test_search_page_exposes_debug_toolbar_for_raw_http_history():
+    """As a developer, I inspect this page session's raw HTTP exchanges."""
+    with TestClient(app) as client:
+        page = PageElements()
+        page.feed(client.get("/").text)
+        ids = {
+            attrs.get("id"): (tag, attrs)
+            for tag, attrs in page.elements
+            if attrs.get("id")
+        }
+        assert ids["debug-open"] == (
+            "button",
+            {"id": "debug-open", "class": "debug-trigger", "type": "button"},
+        )
+        assert ids["debug-dialog"][0] == "dialog"
+        assert ids["debug-dialog"][1]["aria-labelledby"] == "debug-title"
+        assert ids["debug-close"][0] == "button"
+        assert ids["debug-count"][0] == "p"
+        assert ids["debug-entries"][1]["aria-label"] == "Raw HTTP exchanges"
+        assert client.get("/static/debug-http.js").status_code == 200
+        assert client.get("/static/debug-toolbar.js").status_code == 200
+
+
 def test_search_assets_have_correct_types_and_safe_file_boundaries():
     with TestClient(app) as client:
         for name, content_type in [

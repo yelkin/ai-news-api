@@ -1,4 +1,5 @@
 import { normalizeQuery, normalizeResponse } from './result-data.js';
+import { debugFetch } from './debug-http.js';
 
 /** As a job seeker, I can describe my next job and follow relevant posting links. */
 const form = document.querySelector('#search-form');
@@ -115,7 +116,7 @@ form.addEventListener('submit', async event => {
   const timeout = setTimeout(() => controller.abort(), 240000);
   try {
     // API contract: /openapi.json, POST /jobs/search (also documented at /docs).
-    const response = await fetch('/jobs/search', {
+    const response = await debugFetch('/jobs/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, limit: 10 }),

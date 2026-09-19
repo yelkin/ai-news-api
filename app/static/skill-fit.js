@@ -1,5 +1,6 @@
 import { safeSourceUrl } from './result-data.js';
 import { parseTitles } from './job-workflow.js';
+import { debugFetch } from './debug-http.js';
 
 export { parseTitles } from './job-workflow.js';
 
@@ -20,7 +21,7 @@ async function api(path, body) {
   const timeout = setTimeout(() => controller.abort(), 600000);
   try {
     // API contracts: /openapi.json and /docs. No resume data is saved in browser storage.
-    const response = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:controller.signal});
+    const response = await debugFetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:controller.signal});
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       throw Error(typeof data.detail === 'string' ? data.detail : 'Request failed. Check the input and try again.');
@@ -68,7 +69,7 @@ function setup() {
     const query = pieces.pop().trim();
     titleTimer = setTimeout(async () => {
       try {
-        const response = await fetch(`/jobs/titles?q=${encodeURIComponent(query)}&limit=10`);
+        const response = await debugFetch(`/jobs/titles?q=${encodeURIComponent(query)}&limit=10`);
         if (!response.ok) return;
         const titles = await response.json();
         if (seq !== titleSequence) return;
@@ -103,7 +104,7 @@ function setup() {
   $('fit-add-skill').addEventListener('input', async () => {
     const seq = ++skillSequence;
     try {
-      const response = await fetch(`/qualifications?q=${encodeURIComponent($('fit-add-skill').value)}&limit=10`);
+      const response = await debugFetch(`/qualifications?q=${encodeURIComponent($('fit-add-skill').value)}&limit=10`);
       if (!response.ok) return;
       const values = await response.json();
       if (seq !== skillSequence) return;
