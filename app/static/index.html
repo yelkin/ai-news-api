@@ -3,108 +3,104 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Describe your next job. Find relevant opportunities with Job Search.">
-  <title>Job Search — good work is out there</title>
-  <link rel="stylesheet" href="/static/styles.css">
-  <script type="module" src="/static/search.js"></script>
-  <script type="module" src="/static/skill-fit.js"></script>
-  <script type="module" src="/static/debug-toolbar.js"></script>
+  <meta name="description" content="Find jobs that best match your skills.">
+  <title>Job Search</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style type="text/tailwindcss">
+    @layer base {
+      [hidden] { display: none !important; }
+      button { cursor: pointer; }
+      :focus-visible { outline: 3px solid #7c3aed; outline-offset: 3px; }
+    }
+    @layer components {
+      .search-modes button { @apply rounded-full border px-4 py-2 text-sm font-semibold transition-colors; }
+      .search-modes button[aria-pressed="true"] { @apply border-violet-700 bg-violet-700 text-white hover:bg-violet-800; }
+      .search-modes button[aria-pressed="false"] { @apply border-slate-300 bg-white text-slate-700 hover:border-violet-400; }
+      .result { @apply border-b border-slate-200 py-6 last:border-0; }
+      .result-source { @apply mb-2 flex items-center gap-3; }
+      .company-icon { @apply grid size-9 shrink-0 place-items-center rounded-lg bg-violet-100 text-sm font-bold text-violet-800; }
+      .company-name { @apply text-sm font-semibold text-slate-800; }
+      .source-domain, .result-meta { @apply text-xs text-slate-500; }
+      .result h2 { @apply mb-2 text-lg font-semibold text-slate-900; }
+      .result h2 a { @apply text-violet-800 underline-offset-2 hover:underline; }
+      .result-description { @apply text-sm leading-6 text-slate-600; }
+      .fit-coverage { @apply font-semibold text-emerald-800; }
+      .fit-original { @apply ml-4; }
+      .skill-chip { @apply rounded-full border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900 hover:bg-violet-100; }
+      .citations a, .result > a { @apply text-sm font-medium text-violet-800 underline underline-offset-2; }
+      .debug-trigger { @apply fixed bottom-4 right-4 z-20 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white shadow-lg; }
+      .debug-dialog { @apply m-auto max-h-[calc(100vh-2rem)] w-[min(56rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl; }
+      .debug-dialog::backdrop { background: rgb(15 23 42 / .55); }
+      .debug-dialog > header { @apply sticky top-0 flex items-start justify-between gap-4 border-b border-slate-200 bg-white p-5; }
+      .debug-dialog h2 { @apply text-lg font-semibold; }
+      .debug-dialog > p, .debug-dialog header p { @apply text-sm text-slate-600; }
+      .debug-dialog > p { @apply p-5; }
+      .debug-entries { @apply space-y-4 p-5; }
+      .debug-entries li { @apply border-b border-slate-200 pb-4; }
+      .debug-entries pre { @apply whitespace-pre-wrap break-words font-mono text-xs leading-5; }
+    }
+  </style>
+  <script type="module" src="/static/main-page.js"></script>
 </head>
-<body class="skill-fit-mode">
-  <header class="search-header">
-    <a class="brand" href="/" aria-label="Job Search home">
-      <svg class="mascot" viewBox="0 0 84 80" role="img" aria-label="A googly-eyed briefcase ready for work">
-        <g transform="rotate(-9 42 40)">
-          <path d="M29 25v-8q0-5 5-5h16q5 0 5 5v8" fill="none" stroke="#323a48" stroke-width="5"/>
-          <rect x="9" y="23" width="66" height="45" rx="12" fill="#ffd46b" stroke="#323a48" stroke-width="3"/>
-          <path d="M10 43q32 14 64 0" fill="none" stroke="#d3a442" stroke-width="2"/>
-          <ellipse cx="32" cy="37" rx="10" ry="12" fill="white" stroke="#323a48" stroke-width="2"/>
-          <ellipse cx="53" cy="34" rx="10" ry="12" fill="white" stroke="#323a48" stroke-width="2"/>
-          <circle cx="35" cy="39" r="4" fill="#323a48"/><circle cx="50" cy="32" r="4" fill="#323a48"/>
-          <path d="M35 55q8 10 16-1" fill="none" stroke="#323a48" stroke-width="3" stroke-linecap="round"/>
-          <path d="m24 68-3 7m37-7 5 7" stroke="#323a48" stroke-width="4" stroke-linecap="round"/>
-        </g>
-      </svg>
-      <span>Job<span class="brand-accent">Search</span><span class="brand-dot">.</span></span>
-    </a>
-    <p class="intro">Good work is out there.<br><span>Let’s find your kind.</span></p>
-    <nav class="search-modes" aria-label="Search mode">
+<body class="skill-fit-mode flex min-h-screen flex-col bg-slate-50 text-slate-900 antialiased">
+  <header class="border-b border-slate-200 bg-white">
+    <div class="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
+      <a class="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900 no-underline" href="/" aria-label="Job Search home"><span aria-hidden="true">💼</span> Job Search</a>
+      <a class="text-sm font-medium text-violet-800 underline-offset-2 hover:underline" href="/jobs/manage">Update job data</a>
+    </div>
+  </header>
+  <main id="workflow-content" class="mx-auto w-full max-w-3xl flex-1 px-5 pb-20 pt-10 sm:px-8 sm:pt-14">
+    <h1 class="max-w-xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Find jobs that best match your skills</h1>
+    <nav class="search-modes mt-8 flex flex-wrap gap-2 border-b border-slate-200 pb-4" aria-label="Search mode">
       <button type="button" data-search-mode="fit" aria-pressed="true">Match my skills</button>
       <button type="button" data-search-mode="free" aria-pressed="false">Free-text search</button>
-      <a class="mode-link" href="/jobs/manage">Update job data</a>
     </nav>
-  </header>
-  <main id="workflow-content">
-    <section id="fit-panel" class="fit-panel" aria-label="Match my skills" aria-busy="false">
-      <h1>Find work that fits your skills.</h1>
-      <label for="fit-titles">Job titles</label>
-      <input id="fit-titles" list="fit-title-suggestions" maxlength="2010" placeholder="Site Reliability Engineer; Platform Engineer" aria-describedby="fit-titles-help">
-      <datalist id="fit-title-suggestions"></datalist>
-      <p id="fit-titles-help" class="fit-help">Choose a suggestion or type your own. Separate up to 10 titles with semicolons.</p>
-      <label for="fit-resume">Your resume (.txt)</label>
-      <input id="fit-resume" type="file" accept=".txt,text/plain" aria-describedby="fit-resume-help">
-      <p id="fit-resume-help" class="fit-help">UTF-8 text, up to 64 KiB. Extraction sends your resume to OpenAI. We do not save your resume or personal skill selection.</p>
-      <section id="fit-review" hidden tabindex="-1" aria-label="Review your qualifications">
-        <h2>Review your qualifications</h2>
-        <p class="fit-help">Remove anything that does not reflect your experience, or add a qualification.</p>
-        <div id="fit-skills" class="skill-chips"></div>
-        <label for="fit-add-skill">Add a qualification</label>
-        <div class="fit-add-row"><input id="fit-add-skill" list="fit-skill-suggestions" maxlength="200" placeholder="e.g. Kubernetes"><button id="fit-add-button" class="secondary-button" type="button">Add</button></div>
+    <section id="fit-panel" class="fit-panel mt-8" aria-label="Match my skills" aria-busy="false">
+      <div class="space-y-2">
+        <label class="block text-sm font-semibold" for="fit-titles">Job titles</label>
+        <input class="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base focus:border-violet-600" id="fit-titles" list="fit-title-suggestions" maxlength="2010" autocomplete="off" aria-describedby="fit-titles-help">
+        <datalist id="fit-title-suggestions"></datalist>
+        <p id="fit-titles-help" class="text-sm leading-6 text-slate-600">Choose a suggestion or separate up to 10 titles with semicolons.</p>
+      </div>
+      <div class="mt-7 space-y-2">
+        <label class="block text-sm font-semibold" for="fit-resume">Your resume (.txt)</label>
+        <input class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-violet-100 file:px-3 file:py-2 file:font-semibold file:text-violet-900" id="fit-resume" type="file" accept=".txt,text/plain" aria-describedby="fit-resume-help">
+        <p id="fit-resume-help" class="text-sm leading-6 text-slate-600">UTF-8 text, up to 64 KiB. Extraction sends your resume to OpenAI. Your resume and skill selection are not saved.</p>
+      </div>
+      <section id="fit-review" class="mt-8 border-t border-slate-200 pt-7" hidden tabindex="-1" aria-label="Review your qualifications">
+        <h2 class="text-lg font-semibold">Review your qualifications</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Remove anything inaccurate or add a qualification.</p>
+        <div id="fit-skills" class="mt-4 flex flex-wrap gap-2"></div>
+        <label class="mt-6 block text-sm font-semibold" for="fit-add-skill">Add a qualification</label>
+        <div class="mt-2 flex flex-wrap gap-2"><input class="min-w-48 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5" id="fit-add-skill" list="fit-skill-suggestions" maxlength="200"><button id="fit-add-button" class="secondary-button rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-violet-800 hover:bg-violet-50" type="button">Add</button></div>
         <datalist id="fit-skill-suggestions"></datalist>
       </section>
-      <div class="fit-actions">
-        <button id="fit-find" class="search-button" type="button">Find matching jobs →</button>
-      </div>
-      <p id="fit-status" role="status" aria-live="polite" aria-atomic="true"></p>
-      <p><a id="fit-manage-link" href="/jobs/manage" hidden>Update and prepare job data →</a></p>
-      <ol id="fit-results" class="results" aria-label="Jobs ranked by qualification coverage"></ol>
+      <button id="fit-find" class="search-button mt-8 rounded-lg bg-violet-700 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-800 disabled:cursor-wait disabled:opacity-60" type="button">Find matching jobs</button>
+      <p id="fit-status" class="mt-5 text-sm leading-6 text-slate-700 empty:hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+      <p class="mt-3"><a id="fit-manage-link" class="text-sm font-medium text-violet-800 underline" href="/jobs/manage" hidden>Update and prepare job data</a></p>
+      <ol id="fit-results" class="results mt-5" aria-label="Jobs ranked by qualification coverage"></ol>
     </section>
-    <div id="free-search-panel" hidden>
-    <form id="search-form" class="search-form" role="search">
-      <label class="sr-only" for="query">Describe your next job</label>
-      <div class="search-box">
-        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
-        <input id="query" name="query" type="search" maxlength="2000" required autocomplete="off" placeholder="Describe your next job…" aria-describedby="search-help">
-        <button id="search-button" class="search-button" type="submit">Search<span aria-hidden="true"> →</span></button>
-      </div>
-      <p id="search-help" class="search-help">Use your own words. A role, a skill, or something you love doing.</p>
-    </form>
-    <div class="examples" aria-label="Example searches">
-      <span>Try</span>
-      <button type="button" data-example="Remote jobs building reliable Python services">Remote Python roles <span aria-hidden="true">↗</span></button>
-      <button type="button" data-example="Work helping customers solve problems">Helping people <span aria-hidden="true">↗</span></button>
+    <div id="free-search-panel" class="mt-8" hidden>
+      <form id="search-form" role="search">
+        <label class="block text-sm font-semibold" for="query">Describe your next job</label>
+        <div class="mt-2 flex flex-col gap-2 sm:flex-row"><input class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-3 text-base focus:border-violet-600" id="query" name="query" type="search" maxlength="2000" required autocomplete="off" aria-describedby="search-help"><button id="search-button" class="search-button rounded-lg bg-violet-700 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-800 disabled:cursor-wait disabled:opacity-60" type="submit">Search</button></div>
+        <p id="search-help" class="mt-2 text-sm leading-6 text-slate-600">Use your own words to describe the role or work you want.</p>
+      </form>
+      <div class="examples mt-5 flex flex-wrap items-center gap-2 text-sm text-slate-600" aria-label="Example searches"><span>Try:</span><button class="rounded-full border border-slate-300 bg-white px-3 py-2 hover:bg-violet-50" type="button" data-example="Remote jobs building reliable Python services">Remote Python roles</button><button class="rounded-full border border-slate-300 bg-white px-3 py-2 hover:bg-violet-50" type="button" data-example="Work helping customers solve problems">Helping people</button></div>
     </div>
-    </div>
-  <section hidden id="search-content" class="search-content" aria-busy="false">
-    <p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
-    <section id="error-panel" class="message-panel" hidden aria-labelledby="error-title">
-      <h1 id="error-title">That search hit a snag.</h1>
-      <p id="error-message"></p>
-      <button id="retry-button" class="secondary-button" type="button">Try again</button>
+    <section hidden id="search-content" class="search-content mt-8" aria-busy="false">
+      <p id="status" class="status text-sm text-slate-600 empty:hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+      <section id="error-panel" class="message-panel mt-5" hidden aria-labelledby="error-title"><h2 id="error-title" class="text-lg font-semibold">That search hit a snag.</h2><p id="error-message" class="mt-2 text-sm text-slate-600"></p><button id="retry-button" class="secondary-button mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-violet-800" type="button">Try again</button></section>
+      <section id="empty-panel" class="message-panel mt-5" hidden aria-labelledby="empty-title"><h2 id="empty-title" class="text-lg font-semibold">No jobs to show just yet.</h2><p class="mt-2 text-sm text-slate-600">Try another role or a broader description.</p></section>
+      <section id="summary-panel" class="summary-panel mt-6 border-b border-slate-200 pb-6" hidden aria-labelledby="summary-title"><h2 id="summary-title" class="text-lg font-semibold">Search summary</h2><p id="summary-text" class="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700"></p><div id="citations" class="citations mt-3 flex flex-wrap gap-2" aria-label="Jobs cited in the summary"></div></section>
+      <section id="results-panel" class="mt-4" hidden aria-label="Job search results"><ol id="results" class="results"></ol></section>
     </section>
-    <section id="empty-panel" class="message-panel" hidden aria-labelledby="empty-title">
-      <span class="empty-icon" aria-hidden="true">⌕</span>
-      <h1 id="empty-title">No jobs to show just yet.</h1>
-      <p>Try another role or a broader description of the work you’d like to do.</p>
-    </section>
-    <section id="summary-panel" class="summary-panel" hidden aria-labelledby="summary-title">
-      <h1 id="summary-title"><span class="spark" aria-hidden="true">✦</span> Search summary</h1>
-      <p id="summary-text"></p>
-      <div id="citations" class="citations" aria-label="Jobs cited in the summary"></div>
-    </section>
-    <section id="results-panel" hidden aria-label="Job search results">
-      <ol id="results" class="results"></ol>
-    </section>
-  </section>
-    <noscript><p class="message-panel">Enable JavaScript to search for jobs.</p></noscript>
+    <noscript><p class="mt-6 text-sm">Enable JavaScript to search for jobs.</p></noscript>
   </main>
-  <footer><span>Less scrolling. More possibility.</span><span>Job Search <span aria-hidden="true">✦</span></span></footer>
+  <footer class="border-t border-slate-200 bg-white px-5 py-5 text-center text-xs text-slate-500">Job Search · Find relevant work from prepared postings</footer>
   <button id="debug-open" class="debug-trigger" type="button">Debug toolbar</button>
   <dialog id="debug-dialog" class="debug-dialog" aria-labelledby="debug-title">
-    <header>
-      <div><h2 id="debug-title">Debug toolbar</h2><p id="debug-count"></p></div>
-      <button id="debug-close" class="secondary-button" type="button">Close</button>
-    </header>
+    <header><div><h2 id="debug-title">Debug toolbar</h2><p id="debug-count"></p></div><button id="debug-close" class="secondary-button rounded-lg border border-slate-300 px-3 py-2 text-sm" type="button">Close</button></header>
     <p id="debug-empty">No HTTP requests have been made in this search session.</p>
     <ol id="debug-entries" class="debug-entries" aria-label="Raw HTTP exchanges"></ol>
   </dialog>
